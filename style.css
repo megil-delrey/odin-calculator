@@ -1,0 +1,97 @@
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: "Roboto", sans-serif;
+}
+
+#calculator {
+    width: fit-content;
+    background-color: rgb(0%, 40%, 50%);
+    margin-top: 20px;
+    margin-inline: auto;
+    padding: 10px;
+    color: rgb(90%, 90%, 90%);
+    border-radius: 4px;
+}
+
+#display {
+    text-align: right;
+    margin-bottom: 10px;
+    border: 1px solid rgb(90%, 90%, 90%);
+    border-radius: 4px;
+    padding-inline: 5px;
+}
+
+#display > #expression {
+    font-size: 20px;
+    color: rgb(60%, 60%, 60%);
+    height: 24px;
+
+}
+
+#display > #value {
+    font-size: 30px;
+    color: rgb(90%, 90%, 90%);
+
+}
+
+#buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.button-row {
+    display: flex;
+    gap: 2px;
+}
+
+.first-row {
+    justify-content: flex-end;
+}
+
+button {
+    width: 70px;
+    height: 50px;
+    border-radius: 4px;
+    text-align: center;
+    background-color: rgb(0%, 60%, 75%);
+    font-size: 20px;
+    border: none;
+    color: rgb(90%, 90%, 90%);
+}
+
+button[data-key="0"] {
+    width: 142px;
+}
+
+button:hover {
+    cursor: pointer;
+    background-color: rgb(0%, 52%, 65%);
+}
+
+button:active {
+    background-color: rgb(0%, 60%, 75%);
+}
+
+#btn-equals {
+    color: rgb(10%, 10%, 10%);
+    background-color: rgb(90%, 90%, 90%);
+}
+
+#btn-equals:hover {
+    background-color: rgb(80%, 80%, 80%);
+}
+
+#btn-equals:active {
+    background-color: rgb(90%, 90%, 90%);
+}
