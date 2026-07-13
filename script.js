@@ -1,6 +1,6 @@
-let num1 = "";
+let firstOperand = "";
 let prevOperator = "";
-let waitingForNum2 = false;
+let waitingForSecondOperand = false;
 let equalsPressed = false;
 let displayValue = "0";
 const displayExpression = document.querySelector("#display > #expression");
@@ -25,26 +25,26 @@ function operate(operator, a, b) {
             result = a / b;
             break;
     }
-    result = String(Number(result.toFixed(3)));
+    result = Number(result.toFixed(3));
     return result;
 }
 
-function formatDisplayValue(value) {
-    if (value.includes(".")) {
-        const [integer, decimal] = value.split(".");
-        return `${Number(integer).toLocaleString("en-US")}.${decimal}`;
+function formatNumber(number) {
+    if (number.includes(".")) {
+        const [integerDigits, decimalDigits] = number.split(".");
+        return `${Number(integerDigits).toLocaleString("en-US")}.${decimalDigits}`;
     }
-    return Number(value).toLocaleString("en-US");    
+    return Number(number).toLocaleString("en-US");    
 }
 
 function updateDisplay() {
     // console.log("Updating display:", displayValue);
-    displayValueDiv.textContent = formatDisplayValue(displayValue);
+    displayValueDiv.textContent = formatNumber(displayValue);
 }
 
 function checkIfDisplayValueHasToReset() {
-    if (waitingForNum2) {
-        waitingForNum2 = false;
+    if (waitingForSecondOperand) {
+        waitingForSecondOperand = false;
         displayValue = "0";        
     }
     else if (equalsPressed) {
@@ -53,14 +53,15 @@ function checkIfDisplayValueHasToReset() {
     }
 }
 
-function willANewCharacterFit() {
+function willANewCharFit() {
     return displayValue.length < 13;
 }
 
 function inputDigit(digit) {
-    // console.log("inputDigit", digit);
-    if (!willANewCharacterFit()) return;
     checkIfDisplayValueHasToReset();
+    if (!willANewCharFit()) {
+        return;
+    }
     if (displayValue === "0") {
         displayValue = digit;
     }
@@ -68,11 +69,14 @@ function inputDigit(digit) {
         displayValue += digit;
     }
     updateDisplay();
+    // console.log("inputDigit: ", digit);
 }
 
 function inputDecimalPoint() {
-    if (!willANewCharacterFit()) return;
     checkIfDisplayValueHasToReset();
+    if (!willANewCharFit()) {
+        return;
+    }
     if (!displayValue.includes(".")) {
         displayValue += ".";
     }
@@ -80,31 +84,31 @@ function inputDecimalPoint() {
 }
 
 function handleOperator(operator) {
-    if (!num1) {
-        num1 = displayValue;
+    if (!firstOperand) {
+        firstOperand = displayValue;
     }
-    else if (num1 && !waitingForNum2) {
-        const result = operate(prevOperator, num1, displayValue);
-        num1 = result;
+    else if (firstOperand && !waitingForSecondOperand) {
+        const result = String(operate(prevOperator, firstOperand, displayValue));
+        firstOperand = result;
         displayValue = result;
         updateDisplay();
     }
-    displayExpression.textContent = `${num1} ${operator}`;
-    waitingForNum2 = true;
+    displayExpression.textContent = `${formatNumber(firstOperand)} ${operator}`;
+    waitingForSecondOperand = true;
     prevOperator = operator;
-    // console.log("handleOperator()");
+    // console.log("handleOperator");
 }
 
 function calculate() {
-    console.log("calculate");
-    if (num1 && !waitingForNum2) {
-        displayExpression.textContent = `${num1} ${prevOperator} ${displayValue} =`;
-        const result = operate(prevOperator, num1, displayValue);
-        num1 = "";
+    if (firstOperand && !waitingForSecondOperand) {
+        displayExpression.textContent = `${formatNumber(firstOperand)} ${prevOperator} ${formatNumber(displayValue)} =`;
+        const result = String(operate(prevOperator, firstOperand, displayValue));
+        firstOperand = "";
         displayValue = result;
         updateDisplay();
     }
     equalsPressed = true
+    // console.log("calculate");
 }
 
 function backspace() {
@@ -118,9 +122,9 @@ function backspace() {
 }
 
 function clear() {
-    num1 = "";
+    firstOperand = "";
     prevOperator = "";
-    waitingForNum2 = false;
+    waitingForSecondOperand = false;
     equalsPressed = false;
     displayValue = "0";
     displayExpression.textContent = "";
@@ -129,7 +133,7 @@ function clear() {
 
 
 const digits = "0123456789";
-const operators = "+-×/";
+const operators = "+-*/";
 
 function handleKey(key) {
     // console.log("handleKey:", key);
@@ -153,8 +157,12 @@ document.querySelectorAll("button[data-key]").forEach((button) => {
 });
 
 document.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-        e.preventDefault();
+    // console.log(e.key);
+    // if (e.key === "Enter" || e.key === "/") {
+    //     e.preventDefault();
+    // }
+    // handleKey(e.key);
+    if (e.key === "1") {
+        document.querySelector("button[data-key='1']").click();
     }
-    handleKey(e.key);
 });
