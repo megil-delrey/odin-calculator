@@ -18,10 +18,13 @@ function operate(operator, a, b) {
         case "-":
             result = a - b;
             break;
-        case "×":
+        case "*":
             result = a * b;
             break;
         case "/":
+            if (b === 0) {
+                return null;
+            }
             result = a / b;
             break;
     }
@@ -39,10 +42,14 @@ function formatNumber(number) {
 
 function updateDisplay() {
     // console.log("Updating display:", displayValue);
-    displayValueDiv.textContent = formatNumber(displayValue);
+    if (displayValue === null) {
+        displayValueDiv.textContent = "Cannot divide by zero";
+    } else {
+        displayValueDiv.textContent = formatNumber(displayValue);
+    }    
 }
 
-function checkIfDisplayValueHasToReset() {
+function resetDisplayValueIfNeeded() {
     if (waitingForSecondOperand) {
         waitingForSecondOperand = false;
         displayValue = "0";        
@@ -53,13 +60,13 @@ function checkIfDisplayValueHasToReset() {
     }
 }
 
-function willANewCharFit() {
+function canAddCharacter() {
     return displayValue.length < 13;
 }
 
 function inputDigit(digit) {
-    checkIfDisplayValueHasToReset();
-    if (!willANewCharFit()) {
+    resetDisplayValueIfNeeded();
+    if (!canAddCharacter()) {
         return;
     }
     if (displayValue === "0") {
@@ -73,8 +80,8 @@ function inputDigit(digit) {
 }
 
 function inputDecimalPoint() {
-    checkIfDisplayValueHasToReset();
-    if (!willANewCharFit()) {
+    resetDisplayValueIfNeeded();
+    if (!canAddCharacter()) {
         return;
     }
     if (!displayValue.includes(".")) {
@@ -88,8 +95,12 @@ function handleOperator(operator) {
         firstOperand = displayValue;
     }
     else if (firstOperand && !waitingForSecondOperand) {
-        const result = String(operate(prevOperator, firstOperand, displayValue));
-        firstOperand = result;
+        const result = operate(prevOperator, firstOperand, displayValue);
+        if (result !== null) {
+            firstOperand = String(result);            
+        } else {
+            firstOperand = "";
+        }
         displayValue = result;
         updateDisplay();
     }
@@ -102,18 +113,18 @@ function handleOperator(operator) {
 function calculate() {
     if (firstOperand && !waitingForSecondOperand) {
         displayExpression.textContent = `${formatNumber(firstOperand)} ${prevOperator} ${formatNumber(displayValue)} =`;
-        const result = String(operate(prevOperator, firstOperand, displayValue));
+        const result = operate(prevOperator, firstOperand, displayValue);
         firstOperand = "";
-        displayValue = result;
+        displayValue = result !== null ? String(result) : result;        
         updateDisplay();
     }
-    equalsPressed = true
+    equalsPressed = true;
     // console.log("calculate");
 }
 
 function backspace() {
     if (displayValue.length === 1) {
-        displayValue = "0"
+        displayValue = "0";
     }
     else {
         displayValue = displayValue.slice(0, -1);
@@ -131,6 +142,13 @@ function clear() {
     updateDisplay();
 }
 
+function handleDivisionByZero() {
+    firstOperand = "";
+    prevOperator = "";
+    waitingForSecondOperand = false;
+    equalsPressed = false;
+    displayValue = "0";
+}
 
 const digits = "0123456789";
 const operators = "+-*/";
@@ -152,17 +170,41 @@ function handleKey(key) {
     }
 }
 
+const keyMap = {
+    Enter: document.querySelector("button[data-key='=']")
+}
+
 document.querySelectorAll("button[data-key]").forEach((button) => {
+    keyMap[button.dataset.key] = button;
     button.addEventListener("click", () => handleKey(button.dataset.key));
 });
 
 document.addEventListener("keydown", (e) => {
     // console.log(e.key);
-    // if (e.key === "Enter" || e.key === "/") {
-    //     e.preventDefault();
-    // }
-    // handleKey(e.key);
-    if (e.key === "1") {
-        document.querySelector("button[data-key='1']").click();
+    if (e.key === "Enter" || e.key === "/") {
+        e.preventDefault();
     }
+    const button = keyMap[e.key];
+    if (button) {
+        if (e.key === "=" || e.key === "Enter") {
+            button.classList.add("equals-button-active");
+            console.log("classList.add:", button.classList);
+        } else {
+            button.classList.add("button-active");
+        }
+    }
+    handleKey(e.key);
+});
+
+document.addEventListener("keyup", (e) => {
+    const button = keyMap[e.key];
+    if (button) {
+        if (e.key === "=" || e.key === "Enter") {
+            button.classList.remove("equals-button-active");
+            console.log("classList.remove:", button.classList);
+        } else {
+            button.classList.remove("button-active");
+        }
+    }
+    console.log("keyup:", e.key);
 });

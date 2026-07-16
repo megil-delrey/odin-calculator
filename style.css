@@ -78,7 +78,8 @@ button:hover {
     background-color: rgb(0%, 56%, 70%);
 }
 
-button:active {
+button:active,
+.button-active {
     background-color: rgb(0%, 48%, 60%);
 }
 
@@ -91,6 +92,8 @@ button[data-key="="]:hover {
     background-color: rgb(80%, 80%, 80%);
 }
 
-button[data-key="="]:active {
+button[data-key="="]:active,
+button[data-key="="].equals-button-active {
     background-color: rgb(70%, 70%, 70%);
 }
+
