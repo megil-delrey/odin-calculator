@@ -1,10 +1,15 @@
-let firstOperand = "";
-let prevOperator = "";
-let waitingForSecondOperand = false;
-let equalsPressed = false;
-let displayValue = "0";
-const displayExpression = document.querySelector("#display > #expression");
-const displayValueDiv = document.querySelector("#display > #value");
+const expressionDiv = document.querySelector(".expression");
+const valueDiv = document.querySelector(".value");
+const digitButtons = document.querySelectorAll(".digit");
+const operatorButtons = document.querySelectorAll(".operator");
+const equalsButton = document.querySelector(".equals");
+const clearButton = document.querySelector(".clear");
+const backspaceButton = document.querySelector(".backspace");
+
+let firstNumber = "";
+let operator = "";
+let secondNumber = "";
+let shouldResetDisplay = false;
 
 
 function operate(operator, a, b) {
@@ -13,51 +18,36 @@ function operate(operator, a, b) {
     let result;
     switch (operator) {
         case "+":
-            result = a + b;
-            break;
+            return a + b;
         case "-":
-            result = a - b;
-            break;
-        case "*":
-            result = a * b;
-            break;
-        case "/":
+            return a - b;
+        case "×":
+            return a * b;
+        case "÷":
             if (b === 0) {
                 return null;
             }
-            result = a / b;
-            break;
+            return a / b;
     }
-    result = Number(result.toFixed(3));
-    return result;
 }
 
 function formatNumber(number) {
+    number = String(number);
     if (number.includes(".")) {
-        const [integerDigits, decimalDigits] = number.split(".");
-        return `${Number(integerDigits).toLocaleString("en-US")}.${decimalDigits}`;
+        const [whole, decimal] = number.split(".");
+        return `${Number(whole).toLocaleString("en-US")}.${decimal}`;
     }
     return Number(number).toLocaleString("en-US");    
 }
 
-function updateDisplay() {
+function updateDisplay(value) {
     // console.log("Updating display:", displayValue);
-    if (displayValue === null) {
-        displayValueDiv.textContent = "Cannot divide by zero";
-    } else {
-        displayValueDiv.textContent = formatNumber(displayValue);
-    }    
-}
-
-function resetDisplayValueIfNeeded() {
-    if (waitingForSecondOperand) {
-        waitingForSecondOperand = false;
-        displayValue = "0";        
-    }
-    else if (equalsPressed) {
-        equalsPressed = false;
-        displayValue = "0";  
-    }
+    // if (displayValue === null) {
+    //     displayValueDiv.textContent = "Cannot divide by zero";
+    // } else {
+    //     displayValueDiv.textContent = formatNumber(displayValue);
+    // }
+    valueDiv.textContent - value;
 }
 
 function canAddCharacter() {
@@ -65,56 +55,53 @@ function canAddCharacter() {
 }
 
 function inputDigit(digit) {
-    resetDisplayValueIfNeeded();
     if (!canAddCharacter()) {
         return;
     }
-    if (displayValue === "0") {
-        displayValue = digit;
+    if (valueDiv.textContent === "0") {
+        updateDisplay(digit);
     }
     else {
-        displayValue += digit;
+        updateDisplay(valueDiv.textContent + digit);
     }
-    updateDisplay();
     // console.log("inputDigit: ", digit);
 }
 
 function inputDecimalPoint() {
-    resetDisplayValueIfNeeded();
-    if (!canAddCharacter()) {
-        return;
-    }
-    if (!displayValue.includes(".")) {
-        displayValue += ".";
-    }
+    // if (!canAddCharacter()) {
+    //     return;
+    // }
+    // if (!displayValue.includes(".")) {
+    //     displayValue += ".";
+    // }
     updateDisplay();
 }
 
 function handleOperator(operator) {
-    if (!firstOperand) {
-        firstOperand = displayValue;
-    }
-    else if (firstOperand && !waitingForSecondOperand) {
-        const result = operate(prevOperator, firstOperand, displayValue);
-        if (result !== null) {
-            firstOperand = String(result);            
-        } else {
-            firstOperand = "";
-        }
-        displayValue = result;
-        updateDisplay();
-    }
-    displayExpression.textContent = `${formatNumber(firstOperand)} ${operator}`;
-    waitingForSecondOperand = true;
-    prevOperator = operator;
+    // if (!firstNumber) {
+    //     firstNumber = displayValue;
+    // }
+    // else if (firstNumber && !waitingForSecondOperand) {
+    //     const result = operate(operator, firstNumber, displayValue);
+    //     if (result !== null) {
+    //         firstNumber = result;            
+    //     } else {
+    //         firstNumber = "";
+    //     }
+    //     displayValue = result;
+    //     updateDisplay();
+    // }
+    // displayExpression.textContent = `${formatNumber(firstNumber)} ${operator}`;
+    // waitingForSecondOperand = true;
+    // operator = operator;
     // console.log("handleOperator");
 }
 
 function calculate() {
-    if (firstOperand && !waitingForSecondOperand) {
-        displayExpression.textContent = `${formatNumber(firstOperand)} ${prevOperator} ${formatNumber(displayValue)} =`;
-        const result = operate(prevOperator, firstOperand, displayValue);
-        firstOperand = "";
+    if (firstNumber && !waitingForSecondOperand) {
+        displayExpression.textContent = `${formatNumber(firstNumber)} ${operator} ${formatNumber(displayValue)} =`;
+        const result = operate(operator, firstNumber, displayValue);
+        firstNumber = "";
         displayValue = result !== null ? String(result) : result;        
         updateDisplay();
     }
@@ -133,78 +120,85 @@ function backspace() {
 }
 
 function clear() {
-    firstOperand = "";
-    prevOperator = "";
-    waitingForSecondOperand = false;
-    equalsPressed = false;
+    firstNumber = "";
+    operator = "";
     displayValue = "0";
     displayExpression.textContent = "";
     updateDisplay();
 }
 
-function handleDivisionByZero() {
-    firstOperand = "";
-    prevOperator = "";
-    waitingForSecondOperand = false;
-    equalsPressed = false;
-    displayValue = "0";
-}
 
-const digits = "0123456789";
-const operators = "+-*/";
+// ---------------
+// EVENT LISTENERS
+// ---------------
 
-function handleKey(key) {
-    // console.log("handleKey:", key);
-    if (digits.includes(key)) {
-        inputDigit(key);
-    } else if (key === ".") {
-        inputDecimalPoint();
-    } else if (operators.includes(key)) {
-        handleOperator(key);
-    } else if (key === "=" || key === "Enter") {
-        calculate();
-    } else if (key === "Backspace") {
-        backspace();
-    } else if (key === "Escape") {
-        clear();
-    }
-}
-
-const keyMap = {
-    Enter: document.querySelector("button[data-key='=']")
-}
-
-document.querySelectorAll("button[data-key]").forEach((button) => {
-    keyMap[button.dataset.key] = button;
-    button.addEventListener("click", () => handleKey(button.dataset.key));
+digitButtons.forEach((button) => {
+    button.addEventListener("click", () => inputDigit(button.textContent));
 });
 
+operatorButtons.forEach((button) => {
+    button.addEventListener("click", () => handleOperator(button.textContent));
+});
+
+equalsButton.addEventListener("click", calculate);
+
+clearButton.addEventListener("click", clear);
+
+backspaceButton.addEventListener("click", backspace);
+
+// This is for selecting the calculator button that corresponds to a key press
+// so i can add my active class to it
+const keyToButtonMap = {
+    "Enter": document.querySelector(".equals")
+};
+
+// Populate keyToButtonMap
+document.querySelectorAll("button").forEach((button) => {
+    keyToButtonMap[button.dataset.key] = button;
+});
+
+// Keyboard support and adding the active class to the corresponding calculator button 
 document.addEventListener("keydown", (e) => {
-    // console.log(e.key);
-    if (e.key === "Enter" || e.key === "/") {
+    if (e.key >= "0" && e.key <= "9") {
+        inputDigit(e.key);
+    } else if (e.key === "+") {
+        handleOperator("+");
+    } else if (e.key === "-") {
+        handleOperator("-");
+    } else if (e.key === "*") {
+        handleOperator("×");
+    } else if (e.key === "/") {
         e.preventDefault();
+        handleOperator("÷");
+    } else if (e.key === "Enter" || e.key === "=") {
+        e.preventDefault();
+        calculate();
+    } else if (e.key === "Escape") {
+        clear();
+    } else if (e.key === "Backspace") {
+        backspace();
     }
-    const button = keyMap[e.key];
+    
+    const button = keyToButtonMap[e.key];
     if (button) {
         if (e.key === "=" || e.key === "Enter") {
             button.classList.add("equals-button-active");
-            console.log("classList.add:", button.classList);
         } else {
             button.classList.add("button-active");
         }
     }
-    handleKey(e.key);
+    // console.log(e.key);
 });
 
+// remove active class of button on keyup
 document.addEventListener("keyup", (e) => {
-    const button = keyMap[e.key];
+    const button = keyToButtonMap[e.key];
     if (button) {
         if (e.key === "=" || e.key === "Enter") {
             button.classList.remove("equals-button-active");
-            console.log("classList.remove:", button.classList);
         } else {
             button.classList.remove("button-active");
         }
     }
-    console.log("keyup:", e.key);
+    // console.log("keyup:", e.key);
 });
