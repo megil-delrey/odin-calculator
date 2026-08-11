@@ -40,60 +40,77 @@ function formatNumber(number) {
     return Number(number).toLocaleString("en-US");    
 }
 
-function updateDisplay(value) {
+function getDisplayValue() {
+    return valueDiv.textContent;
+}
+
+function updateDisplayValue(value) {
     // console.log("Updating display:", displayValue);
     // if (displayValue === null) {
     //     displayValueDiv.textContent = "Cannot divide by zero";
     // } else {
     //     displayValueDiv.textContent = formatNumber(displayValue);
     // }
-    valueDiv.textContent - value;
+    valueDiv.textContent = value;
 }
 
 function canAddCharacter() {
-    return displayValue.length < 13;
+    return getDisplayValue().length < 13;
 }
 
 function inputDigit(digit) {
     if (!canAddCharacter()) {
         return;
     }
-    if (valueDiv.textContent === "0") {
-        updateDisplay(digit);
+    if (shouldResetDisplay) {
+        updateDisplayValue("0");
+        shouldResetDisplay = false;
+    }
+    if (getDisplayValue() === "0") {
+        updateDisplayValue(digit);
     }
     else {
-        updateDisplay(valueDiv.textContent + digit);
+        updateDisplayValue(getDisplayValue() + digit);
     }
     // console.log("inputDigit: ", digit);
 }
 
 function inputDecimalPoint() {
-    // if (!canAddCharacter()) {
-    //     return;
-    // }
-    // if (!displayValue.includes(".")) {
-    //     displayValue += ".";
-    // }
-    updateDisplay();
+    if (!canAddCharacter()) {
+        return;
+    }
+    if (shouldResetDisplay) {
+        updateDisplayValue("0");
+        shouldResetDisplay = false;
+    }
+    if (!getDisplayValue().includes(".")) {
+        updateDisplayValue(getDisplayValue() + ".");
+    }
 }
 
-function handleOperator(operator) {
-    // if (!firstNumber) {
-    //     firstNumber = displayValue;
-    // }
-    // else if (firstNumber && !waitingForSecondOperand) {
-    //     const result = operate(operator, firstNumber, displayValue);
-    //     if (result !== null) {
-    //         firstNumber = result;            
-    //     } else {
-    //         firstNumber = "";
-    //     }
-    //     displayValue = result;
-    //     updateDisplay();
-    // }
-    // displayExpression.textContent = `${formatNumber(firstNumber)} ${operator}`;
-    // waitingForSecondOperand = true;
-    // operator = operator;
+function handleOperator(localOperator) {
+    if (!firstNumber) {
+        firstNumber = getDisplayValue();
+    }
+    else if (!secondNumber && !shouldResetDisplay) {
+        secondNumber = getDisplayValue();
+        const result = operate(operator, firstNumber, secondNumber);
+        if (result !== null) {
+            firstNumber = result;
+            updateDisplayValue(result);         
+        } else {
+            updateDisplayValue("Cannot divide by zero");
+            firstNumber = "";
+        }
+        secondNumber = "";
+    }
+
+    operator = localOperator;
+    if (firstNumber !== null) {
+        expressionDiv.textContent = `${formatNumber(firstNumber)} ${operator}`;
+    }    
+    shouldResetDisplay = true;
+
     // console.log("handleOperator");
 }
 
@@ -103,20 +120,20 @@ function calculate() {
         const result = operate(operator, firstNumber, displayValue);
         firstNumber = "";
         displayValue = result !== null ? String(result) : result;        
-        updateDisplay();
+        updateDisplayValue();
     }
     equalsPressed = true;
     // console.log("calculate");
 }
 
 function backspace() {
-    if (displayValue.length === 1) {
-        displayValue = "0";
+    if (valueDiv.textContent.length === 1) {
+        updateDisplayValue("0");
     }
     else {
-        displayValue = displayValue.slice(0, -1);
+        updateDisplayValue(valueDiv.textContent.slice(0, -1));
     }
-    updateDisplay();
+    updateDisplayValue();
 }
 
 function clear() {
@@ -124,7 +141,7 @@ function clear() {
     operator = "";
     displayValue = "0";
     displayExpression.textContent = "";
-    updateDisplay();
+    updateDisplayValue();
 }
 
 
@@ -171,7 +188,9 @@ document.addEventListener("keydown", (e) => {
         e.preventDefault();
         handleOperator("÷");
     } else if (e.key === "Enter" || e.key === "=") {
-        e.preventDefault();
+        if (e.key === "Enter") {
+            e.preventDefault();
+        }
         calculate();
     } else if (e.key === "Escape") {
         clear();
@@ -190,7 +209,7 @@ document.addEventListener("keydown", (e) => {
     // console.log(e.key);
 });
 
-// remove active class of button on keyup
+// Remove active class of button on keyup
 document.addEventListener("keyup", (e) => {
     const button = keyToButtonMap[e.key];
     if (button) {
