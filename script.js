@@ -89,10 +89,7 @@ function inputDecimalPoint() {
 }
 
 function handleOperator(localOperator) {
-    if (!firstNumber) {
-        firstNumber = getDisplayValue();
-    }
-    else if (!secondNumber && !shouldResetDisplay) {
+    if (firstNumber && !shouldResetDisplay) {
         secondNumber = getDisplayValue();
         const result = operate(operator, firstNumber, secondNumber);
         if (result !== null) {
@@ -102,7 +99,10 @@ function handleOperator(localOperator) {
             updateDisplayValue("Cannot divide by zero");
             firstNumber = "";
         }
+        // Clear secondNumber so that pressing an operator after a successful calculation won't run this conditional block
         secondNumber = "";
+    } else {
+        firstNumber = getDisplayValue();
     }
 
     operator = localOperator;
