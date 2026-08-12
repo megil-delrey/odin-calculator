@@ -1,6 +1,7 @@
 const expressionDiv = document.querySelector(".expression");
 const valueDiv = document.querySelector(".value");
 const digitButtons = document.querySelectorAll(".digit");
+const decimalPointButton = document.querySelector(".decimal-point");
 const operatorButtons = document.querySelectorAll(".operator");
 const equalsButton = document.querySelector(".equals");
 const clearButton = document.querySelector(".clear");
@@ -10,6 +11,7 @@ let firstNumber = "";
 let operator = "";
 let secondNumber = "";
 let shouldResetDisplayValue = false;
+let dividedByZero = false;
 
 
 // ----------------
@@ -30,7 +32,6 @@ function getDisplayValue() {
 }
 
 function updateDisplayValue(value) {
-    // console.log("Updating display:", displayValue);
     // if (displayValue === null) {
     //     displayValueDiv.textContent = "Cannot divide by zero";
     // } else {
@@ -41,6 +42,24 @@ function updateDisplayValue(value) {
 
 function canAddCharacter() {
     return getDisplayValue().length < 13;
+}
+
+function checkBeforeInputting() {
+    if (dividedByZero) {
+        expressionDiv.textContent = "";
+        enableButtons();
+        dividedByZero = false;
+    }
+    if (shouldResetDisplayValue) {
+        updateDisplayValue("0");
+        shouldResetDisplayValue = false;
+    }
+    // I put this after the above condition because the division by zero message
+    // exceeds the 13 character limit and this won't allow inputting a digit without
+    // resetting the display value first
+    if (!canAddCharacter()) {
+        return;
+    }
 }
 
 function handleDivisionByZero() {
@@ -76,6 +95,7 @@ function operate(operator, a, b) {
             return a * b;
         case "÷":
             if (b === 0) {
+                dividedByZero = true;
                 return null;
             }
             return a / b;
@@ -83,12 +103,18 @@ function operate(operator, a, b) {
 }
 
 function inputDigit(digit) {
+    if (dividedByZero) {
+        expressionDiv.textContent = "";
+        enableButtons();
+        dividedByZero = false;
+    }
     if (shouldResetDisplayValue) {
         updateDisplayValue("0");
         shouldResetDisplayValue = false;
     }
-    // I put this after the above condition because the division be zero message
-    // exceeds the 13 character limit 
+    // I put this after the above condition because the division by zero message
+    // exceeds the 13 character limit and this won't allow inputting a digit without
+    // resetting the display value first
     if (!canAddCharacter()) {
         return;
     }
@@ -102,12 +128,17 @@ function inputDigit(digit) {
 }
 
 function inputDecimalPoint() {
-    if (!canAddCharacter()) {
-        return;
+    if (dividedByZero) {
+        expressionDiv.textContent = "";
+        enableButtons();
+        dividedByZero = false;
     }
     if (shouldResetDisplayValue) {
         updateDisplayValue("0");
         shouldResetDisplayValue = false;
+    }
+    if (!canAddCharacter()) {
+        return;
     }
     if (!getDisplayValue().includes(".")) {
         updateDisplayValue(getDisplayValue() + ".");
@@ -120,18 +151,19 @@ function handleOperator(localOperator) {
         const result = operate(operator, firstNumber, secondNumber);
         if (result !== null) {
             firstNumber = result;
+            // Clear secondNumber so that pressing an operator after a successful calculation won't run this conditional block
+            secondNumber = "";
             updateDisplayValue(result);         
         } else {
             handleDivisionByZero();
         }
-        // Clear secondNumber so that pressing an operator after a successful calculation won't run this conditional block
-        secondNumber = "";
     } else {
         firstNumber = getDisplayValue();
     }
 
     operator = localOperator;
-    if (firstNumber !== null) {
+    
+    if (firstNumber !== "") {
         expressionDiv.textContent = `${formatNumber(firstNumber)} ${operator}`;
     }    
     shouldResetDisplayValue = true;
@@ -139,14 +171,21 @@ function handleOperator(localOperator) {
 }
 
 function calculate() {
-    if (firstNumber && !waitingForSecondOperand) {
-        displayExpression.textContent = `${formatNumber(firstNumber)} ${operator} ${formatNumber(displayValue)} =`;
-        const result = operate(operator, firstNumber, displayValue);
-        firstNumber = "";
-        displayValue = result !== null ? String(result) : result;        
-        updateDisplayValue();
+    if (firstNumber && !shouldResetDisplayValue) {
+        secondNumber = getDisplayValue();
+        expressionDiv.textContent = `${formatNumber(firstNumber)} ${operator} ${formatNumber(secondNumber)} =`;
+        const result = operate(operator, firstNumber, secondNumber);
+        if (result !== null) {
+            updateDisplayValue(result);
+            firstNumber = "";
+            operator = "";
+            secondNumber = "";
+        }
+        else {
+            handleDivisionByZero();
+        }
+        
     }
-    equalsPressed = true;
     // console.log("calculate");
 }
 
@@ -179,6 +218,8 @@ digitButtons.forEach((button) => {
     button.addEventListener("click", () => inputDigit(button.textContent));
 });
 
+decimalPointButton.addEventListener("click", inputDecimalPoint);
+
 operatorButtons.forEach((button) => {
     button.addEventListener("click", () => handleOperator(button.textContent));
 });
@@ -204,23 +245,33 @@ document.querySelectorAll("button").forEach((button) => {
 document.addEventListener("keydown", (e) => {
     if (e.key >= "0" && e.key <= "9") {
         inputDigit(e.key);
-    } else if (e.key === "+") {
+    }
+    else if (e.key === ".") {
+        inputDecimalPoint();
+    }
+    else if (e.key === "+") {
         handleOperator("+");
-    } else if (e.key === "-") {
+    }
+    else if (e.key === "-") {
         handleOperator("-");
-    } else if (e.key === "*") {
+    }
+    else if (e.key === "*") {
         handleOperator("×");
-    } else if (e.key === "/") {
+    }
+    else if (e.key === "/") {
         e.preventDefault();
         handleOperator("÷");
-    } else if (e.key === "Enter" || e.key === "=") {
+    }
+    else if (e.key === "Enter" || e.key === "=") {
         if (e.key === "Enter") {
             e.preventDefault();
         }
         calculate();
-    } else if (e.key === "Escape") {
+    }
+    else if (e.key === "Escape") {
         clear();
-    } else if (e.key === "Backspace") {
+    }
+    else if (e.key === "Backspace") {
         backspace();
     }
     
@@ -228,7 +279,8 @@ document.addEventListener("keydown", (e) => {
     if (button) {
         if (e.key === "=" || e.key === "Enter") {
             button.classList.add("equals-button-active");
-        } else {
+        }
+        else {
             button.classList.add("button-active");
         }
     }
@@ -241,7 +293,8 @@ document.addEventListener("keyup", (e) => {
     if (button) {
         if (e.key === "=" || e.key === "Enter") {
             button.classList.remove("equals-button-active");
-        } else {
+        }
+        else {
             button.classList.remove("button-active");
         }
     }
