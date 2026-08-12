@@ -98,3 +98,8 @@ button:active,
 .equals-button-active {
     background-color: rgb(70%, 70%, 70%);
 }
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

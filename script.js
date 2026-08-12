@@ -9,27 +9,12 @@ const backspaceButton = document.querySelector(".backspace");
 let firstNumber = "";
 let operator = "";
 let secondNumber = "";
-let shouldResetDisplay = false;
+let shouldResetDisplayValue = false;
 
 
-function operate(operator, a, b) {
-    a = Number(a);
-    b = Number(b);
-    let result;
-    switch (operator) {
-        case "+":
-            return a + b;
-        case "-":
-            return a - b;
-        case "×":
-            return a * b;
-        case "÷":
-            if (b === 0) {
-                return null;
-            }
-            return a / b;
-    }
-}
+// ----------------
+// Helper functions
+// ----------------
 
 function formatNumber(number) {
     number = String(number);
@@ -58,13 +43,54 @@ function canAddCharacter() {
     return getDisplayValue().length < 13;
 }
 
+function handleDivisionByZero() {
+    updateDisplayValue("Cannot divide by zero");
+    firstNumber = "";
+    operator = "";
+    secondNumber = "";
+    operatorButtons.forEach(button => button.disabled = true);
+    equalsButton.disabled = true;
+    backspaceButton.disabled = true;
+}
+
+function enableButtons() {
+    operatorButtons.forEach(button => button.disabled = false);
+    equalsButton.disabled = false;
+    backspaceButton.disabled = false;
+}
+
+// --------------
+// Main functions
+// --------------
+
+function operate(operator, a, b) {
+    a = Number(a);
+    b = Number(b);
+    let result;
+    switch (operator) {
+        case "+":
+            return a + b;
+        case "-":
+            return a - b;
+        case "×":
+            return a * b;
+        case "÷":
+            if (b === 0) {
+                return null;
+            }
+            return a / b;
+    }
+}
+
 function inputDigit(digit) {
+    if (shouldResetDisplayValue) {
+        updateDisplayValue("0");
+        shouldResetDisplayValue = false;
+    }
+    // I put this after the above condition because the division be zero message
+    // exceeds the 13 character limit 
     if (!canAddCharacter()) {
         return;
-    }
-    if (shouldResetDisplay) {
-        updateDisplayValue("0");
-        shouldResetDisplay = false;
     }
     if (getDisplayValue() === "0") {
         updateDisplayValue(digit);
@@ -79,9 +105,9 @@ function inputDecimalPoint() {
     if (!canAddCharacter()) {
         return;
     }
-    if (shouldResetDisplay) {
+    if (shouldResetDisplayValue) {
         updateDisplayValue("0");
-        shouldResetDisplay = false;
+        shouldResetDisplayValue = false;
     }
     if (!getDisplayValue().includes(".")) {
         updateDisplayValue(getDisplayValue() + ".");
@@ -89,15 +115,14 @@ function inputDecimalPoint() {
 }
 
 function handleOperator(localOperator) {
-    if (firstNumber && !shouldResetDisplay) {
+    if (firstNumber && !shouldResetDisplayValue) {
         secondNumber = getDisplayValue();
         const result = operate(operator, firstNumber, secondNumber);
         if (result !== null) {
             firstNumber = result;
             updateDisplayValue(result);         
         } else {
-            updateDisplayValue("Cannot divide by zero");
-            firstNumber = "";
+            handleDivisionByZero();
         }
         // Clear secondNumber so that pressing an operator after a successful calculation won't run this conditional block
         secondNumber = "";
@@ -109,8 +134,7 @@ function handleOperator(localOperator) {
     if (firstNumber !== null) {
         expressionDiv.textContent = `${formatNumber(firstNumber)} ${operator}`;
     }    
-    shouldResetDisplay = true;
-
+    shouldResetDisplayValue = true;
     // console.log("handleOperator");
 }
 
@@ -127,11 +151,11 @@ function calculate() {
 }
 
 function backspace() {
-    if (valueDiv.textContent.length === 1) {
+    if (getDisplayValue().length === 1) {
         updateDisplayValue("0");
     }
     else {
-        updateDisplayValue(valueDiv.textContent.slice(0, -1));
+        updateDisplayValue(getDisplayValue().slice(0, -1));
     }
     updateDisplayValue();
 }
@@ -139,14 +163,16 @@ function backspace() {
 function clear() {
     firstNumber = "";
     operator = "";
-    displayValue = "0";
-    displayExpression.textContent = "";
-    updateDisplayValue();
+    secondNumber = "";
+    shouldResetDisplayValue = false;
+    expressionDiv.textContent = "";
+    updateDisplayValue("0");
+    
 }
 
 
 // ---------------
-// EVENT LISTENERS
+// Event listeners
 // ---------------
 
 digitButtons.forEach((button) => {
