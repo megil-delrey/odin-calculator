@@ -28,6 +28,10 @@ function formatNumber(number) {
     return Number(number).toLocaleString("en-US");    
 }
 
+function toNumber(string) {
+    return Number(string.split(",").join(""));
+}
+
 function getDisplayValue() {
     return valueDiv.textContent;
 }
@@ -140,16 +144,19 @@ function handleOperator(localOperator) {
             firstNumber = result;
             // Clear secondNumber so that pressing an operator after a successful calculation won't run this conditional block
             secondNumber = "";
-        } else {
+        }
+        else {
             handleDivisionByZero();
         }
-    } else {
+    }
+    else {
         firstNumber = getDisplayValue();
     }
-    operator = localOperator;
+    
     if (!dividedByZero) {
-        expressionDiv.textContent = `${formatNumber(firstNumber)} ${operator}`;
+        expressionDiv.textContent = `${formatNumber(firstNumber)} ${localOperator}`;
     }
+    operator = localOperator;
     // So that when using the result of equals() for another operation, pressing a digit
     // won't clear the expression 
     shouldClearExpression = false;
@@ -261,7 +268,7 @@ document.addEventListener("keydown", (e) => {
     else if (e.key === "Escape") {
         clear();
     }
-    else if (e.key === "Backspace") {
+    else if (e.key === "Backspace" && !dividedByZero) {
         backspace();
     }
     
