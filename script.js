@@ -10,6 +10,7 @@ const backspaceButton = document.querySelector(".backspace");
 let firstNumber = "";
 let operator = "";
 let secondNumber = "";
+let shouldClearExpression = false;
 let shouldResetDisplayValue = false;
 let dividedByZero = false;
 
@@ -46,9 +47,13 @@ function canAddCharacter() {
 
 function checkBeforeInputting() {
     if (dividedByZero) {
-        expressionDiv.textContent = "";
+        shouldClearExpression = true;
         enableButtons();
         dividedByZero = false;
+    }
+    if (shouldClearExpression) {
+        expressionDiv.textContent = "";
+        shouldClearExpression = false;
     }
     if (shouldResetDisplayValue) {
         updateDisplayValue("0");
@@ -58,7 +63,7 @@ function checkBeforeInputting() {
     // exceeds the 13 character limit and this won't allow inputting a digit without
     // resetting the display value first
     if (!canAddCharacter()) {
-        return;
+        return true;
     }
 }
 
@@ -67,6 +72,7 @@ function handleDivisionByZero() {
     firstNumber = "";
     operator = "";
     secondNumber = "";
+    // Disable operator, equals, and backspace buttons
     operatorButtons.forEach(button => button.disabled = true);
     equalsButton.disabled = true;
     backspaceButton.disabled = true;
@@ -103,19 +109,8 @@ function operate(operator, a, b) {
 }
 
 function inputDigit(digit) {
-    if (dividedByZero) {
-        expressionDiv.textContent = "";
-        enableButtons();
-        dividedByZero = false;
-    }
-    if (shouldResetDisplayValue) {
-        updateDisplayValue("0");
-        shouldResetDisplayValue = false;
-    }
-    // I put this after the above condition because the division by zero message
-    // exceeds the 13 character limit and this won't allow inputting a digit without
-    // resetting the display value first
-    if (!canAddCharacter()) {
+    // If true, means the character limit is reached so can't add more digit
+    if (checkBeforeInputting()) {
         return;
     }
     if (getDisplayValue() === "0") {
@@ -128,16 +123,7 @@ function inputDigit(digit) {
 }
 
 function inputDecimalPoint() {
-    if (dividedByZero) {
-        expressionDiv.textContent = "";
-        enableButtons();
-        dividedByZero = false;
-    }
-    if (shouldResetDisplayValue) {
-        updateDisplayValue("0");
-        shouldResetDisplayValue = false;
-    }
-    if (!canAddCharacter()) {
+    if (checkBeforeInputting()) {
         return;
     }
     if (!getDisplayValue().includes(".")) {
@@ -150,27 +136,29 @@ function handleOperator(localOperator) {
         secondNumber = getDisplayValue();
         const result = operate(operator, firstNumber, secondNumber);
         if (result !== null) {
+            updateDisplayValue(result);
             firstNumber = result;
             // Clear secondNumber so that pressing an operator after a successful calculation won't run this conditional block
             secondNumber = "";
-            updateDisplayValue(result);         
         } else {
             handleDivisionByZero();
         }
     } else {
         firstNumber = getDisplayValue();
     }
-
     operator = localOperator;
-    
-    if (firstNumber !== "") {
+    if (!dividedByZero) {
         expressionDiv.textContent = `${formatNumber(firstNumber)} ${operator}`;
-    }    
+    }
+    // So that when using the result of equals() for another operation, pressing a digit
+    // won't clear the expression 
+    shouldClearExpression = false;
+    // ---------------------------------------------------------------------------- 
     shouldResetDisplayValue = true;
     // console.log("handleOperator");
 }
 
-function calculate() {
+function equals() {
     if (firstNumber && !shouldResetDisplayValue) {
         secondNumber = getDisplayValue();
         expressionDiv.textContent = `${formatNumber(firstNumber)} ${operator} ${formatNumber(secondNumber)} =`;
@@ -186,6 +174,8 @@ function calculate() {
         }
         
     }
+    shouldClearExpression = true;
+    shouldResetDisplayValue = true;
     // console.log("calculate");
 }
 
@@ -196,17 +186,17 @@ function backspace() {
     else {
         updateDisplayValue(getDisplayValue().slice(0, -1));
     }
-    updateDisplayValue();
 }
 
 function clear() {
     firstNumber = "";
     operator = "";
     secondNumber = "";
+    shouldClearExpression = false;
     shouldResetDisplayValue = false;
+    dividedByZero = false;
     expressionDiv.textContent = "";
     updateDisplayValue("0");
-    
 }
 
 
@@ -224,7 +214,7 @@ operatorButtons.forEach((button) => {
     button.addEventListener("click", () => handleOperator(button.textContent));
 });
 
-equalsButton.addEventListener("click", calculate);
+equalsButton.addEventListener("click", equals);
 
 clearButton.addEventListener("click", clear);
 
@@ -266,7 +256,7 @@ document.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
             e.preventDefault();
         }
-        calculate();
+        equals();
     }
     else if (e.key === "Escape") {
         clear();
