@@ -19,34 +19,37 @@ let dividedByZero = false;
 // Helper functions
 // ----------------
 
-function formatNumber(number) {
-    number = String(number);
-    if (number.includes(".")) {
-        const [whole, decimal] = number.split(".");
-        return `${Number(whole).toLocaleString("en-US")}.${decimal}`;
+// Thousands separator formatting, e.g. 1000 => 1,000
+function formatNumber(string) {
+    // toLocaleString does not handle well the formatting of numeric string with more than
+    // 3 numbers after the decimal point
+    if (string.includes(".")) {
+        const [whole, decimal] = string.split(".");
+        // console.log(`${typeof decimal}: ${decimal}`);
+        return `${Number(whole).toLocaleString()}.${decimal}`;
     }
-    return Number(number).toLocaleString("en-US");    
+    return Number(string).toLocaleString();;
 }
 
-function toNumber(string) {
-    return Number(string.split(",").join(""));
+function unformatNumber(string) {
+    return string.split(",").join("");
 }
 
 function getDisplayValue() {
-    return valueDiv.textContent;
+    return unformatNumber(valueDiv.textContent);
 }
 
 function updateDisplayValue(value) {
-    // if (displayValue === null) {
-    //     displayValueDiv.textContent = "Cannot divide by zero";
-    // } else {
-    //     displayValueDiv.textContent = formatNumber(displayValue);
-    // }
-    valueDiv.textContent = value;
+    if (value === null) {
+        valueDiv.textContent = "Cannot divide by zero";
+    }
+    else {
+        valueDiv.textContent = formatNumber(value);
+    }
 }
 
 function canAddCharacter() {
-    return getDisplayValue().length < 13;
+    return getDisplayValue().length < 15;
 }
 
 function checkBeforeInputting() {
@@ -64,7 +67,7 @@ function checkBeforeInputting() {
         shouldResetDisplayValue = false;
     }
     // I put this after the above condition because the division by zero message
-    // exceeds the 13 character limit and this won't allow inputting a digit without
+    // exceeds the 15 character limit and this won't allow inputting a digit without
     // resetting the display value first
     if (!canAddCharacter()) {
         return true;
@@ -72,7 +75,7 @@ function checkBeforeInputting() {
 }
 
 function handleDivisionByZero() {
-    updateDisplayValue("Cannot divide by zero");
+    updateDisplayValue(null);
     firstNumber = "";
     operator = "";
     secondNumber = "";
@@ -88,6 +91,9 @@ function enableButtons() {
     backspaceButton.disabled = false;
 }
 
+function round(number) {
+    return Math.round(number * 100) / 100;
+}
 // --------------
 // Main functions
 // --------------
@@ -140,10 +146,10 @@ function handleOperator(localOperator) {
         secondNumber = getDisplayValue();
         const result = operate(operator, firstNumber, secondNumber);
         if (result !== null) {
-            updateDisplayValue(result);
-            firstNumber = result;
+            firstNumber = String(round(result));
             // Clear secondNumber so that pressing an operator after a successful calculation won't run this conditional block
             secondNumber = "";
+            updateDisplayValue(firstNumber);
         }
         else {
             handleDivisionByZero();
@@ -171,18 +177,17 @@ function equals() {
         expressionDiv.textContent = `${formatNumber(firstNumber)} ${operator} ${formatNumber(secondNumber)} =`;
         const result = operate(operator, firstNumber, secondNumber);
         if (result !== null) {
-            updateDisplayValue(result);
             firstNumber = "";
             operator = "";
             secondNumber = "";
+            updateDisplayValue(String(round(result)));
         }
         else {
             handleDivisionByZero();
         }
-        
-    }
     shouldClearExpression = true;
     shouldResetDisplayValue = true;
+    }
     // console.log("calculate");
 }
 
@@ -246,20 +251,20 @@ document.addEventListener("keydown", (e) => {
     else if (e.key === ".") {
         inputDecimalPoint();
     }
-    else if (e.key === "+") {
+    else if (e.key === "+" && !dividedByZero) {
         handleOperator("+");
     }
-    else if (e.key === "-") {
+    else if (e.key === "-" && !dividedByZero) {
         handleOperator("-");
     }
-    else if (e.key === "*") {
+    else if (e.key === "*" && !dividedByZero) {
         handleOperator("×");
     }
-    else if (e.key === "/") {
+    else if (e.key === "/" && !dividedByZero) {
         e.preventDefault();
         handleOperator("÷");
     }
-    else if (e.key === "Enter" || e.key === "=") {
+    else if ((e.key === "Enter" || e.key === "=") && !dividedByZero) {
         if (e.key === "Enter") {
             e.preventDefault();
         }
